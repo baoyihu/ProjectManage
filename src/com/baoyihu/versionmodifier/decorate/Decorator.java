@@ -40,7 +40,7 @@ public class Decorator
     
     public void work()
     {
-        // modifyJava();
+        modifyJava();
         System.out.println();
         modifyXML();
         System.out.println();

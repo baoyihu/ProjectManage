@@ -7,68 +7,85 @@ import java.util.List;
 public class BlockComparator<T extends ValueInterface>
 {
     
-    private final List<T> teamLeft;
+    private final List<T> selfTeam;
     
-    private final List<T> teamRight;
+    private final List<T> otherTeam;
     
+    /**
+     * the lagestCommonList contain the selfTeam and otherTeam which is value equals
+     * but the LCS algorithm guarantee that all the node in lagestCommonList comes from selfTeam;
+     * */
     private List<T> lagestCommonList;
     
     public BlockComparator(List<T> teamLeft, List<T> teamRight)
     {
-        this.teamLeft = teamLeft;
-        this.teamRight = teamRight;
+        this.selfTeam = teamLeft;
+        this.otherTeam = teamRight;
     }
     
     public void compare()
     {
-        LCS<T> lcs = new LCS<T>(teamLeft, teamRight);
+        LCS<T> lcs = new LCS<T>(selfTeam, otherTeam);
         lagestCommonList = lcs.getResult();
     }
     
-    public T findEqualItem(T target, List<T> teamLeft, List<T> otherTeam, boolean isEqual)
+    /**
+     * T target
+     * List<T>
+     * */
+    private List<T> findSubCommonList(T target, List<T> teamLeft, List<T> largestCommon, int position)
     {
         T ret = null;
         List<T> commonList = new ArrayList<T>();
         Iterator<T> iterator = teamLeft.iterator();
-        Iterator<T> iterator1 = lagestCommonList.iterator();
-        T preItem = iterator1.next();
-        ret = preItem;
-        while (iterator.hasNext())
+        Iterator<T> common = largestCommon.iterator();
+        T commonItem = common.next();
+        while (iterator.hasNext() && commonItem != null)
         {
             T temp = iterator.next();
-            
-            if (preItem.equals(temp))
+            if (commonItem.equals(temp))
             {
-                if (preItem != null)
+                commonList.add(commonItem);
+                if (common.hasNext())
                 {
-                    commonList.add(preItem);
-                    if (iterator1.hasNext())
-                    {
-                        preItem = iterator1.next();
-                    }
-                    else
-                    {
-                        preItem = null;
-                    }
+                    commonItem = common.next();
                 }
             }
             if (temp.equals(target))
             {
+                if (position == 1)
+                {
+                    commonList.add(commonItem);
+                    
+                }
+                ret = temp;
                 break;
             }
         }
-        
-        iterator = otherTeam.iterator();
-        iterator1 = commonList.iterator();
-        preItem = iterator1.next();
+        if (position == 0)
+        {
+            if (ret == null)
+            {
+                commonList.clear();
+            }
+        }
+        return commonList;
+    }
+    
+    private T findLastMatchInLists(List<T> otherTeam, List<T> commonList)
+    {
+        T ret = null;
+        Iterator<T> iterator = otherTeam.iterator();
+        Iterator<T> common = commonList.iterator();
+        T commonItem = common.next();
         while (iterator.hasNext())
         {
             T temp = iterator.next();
-            if (temp.valueEquals(preItem))
+            if (temp.valueEquals(commonItem))
             {
-                if (iterator1.hasNext())
+                if (common.hasNext())
                 {
-                    preItem = iterator1.next();
+                    commonItem = common.next();
                 }
                 else
                 {
@@ -80,107 +97,36 @@ public class BlockComparator<T extends ValueInterface>
         return ret;
     }
     
-    public T findNextItem(T target, List<T> teamLeft, List<T> otherTeam, boolean isEqual)
+    /**
+     * the target must in teamSelf
+     * */
+    public T findEqualItem(T target, List<T> teamSelf, List<T> teamOther, boolean isEqual)
     {
-        T ret = null;
-        List<T> commonList = new ArrayList<T>();
-        Iterator<T> iterator = teamLeft.iterator();
-        Iterator<T> iterator1 = lagestCommonList.iterator();
-        T preItem = iterator1.next();
-        ret = preItem;
-        commonList.add(preItem);
-        while (iterator.hasNext())
+        List<T> commonList = findSubCommonList(target, teamSelf, lagestCommonList, 0);
+        if (commonList.isEmpty())
         {
-            T temp = iterator.next();
-            if (preItem.equals(temp))
-            {
-                if (iterator1.hasNext())
-                {
-                    preItem = iterator1.next();
-                    commonList.add(preItem);
-                }
-            }
-            
-            if (temp.equals(target))
-            {
-                //                if (iterator1.hasNext())
-                //                {
-                //                    preItem = iterator1.next();
-                //                    commonList.add(preItem);
-                //                }
-                break;
-            }
-            
+            return null;
         }
-        
-        iterator = otherTeam.iterator();
-        iterator1 = commonList.iterator();
-        preItem = iterator1.next();
-        while (iterator.hasNext())
-        {
-            T temp = iterator.next();
-            if (temp.valueEquals(preItem))
-            {
-                if (iterator1.hasNext())
-                {
-                    preItem = iterator1.next();
-                }
-                else
-                {
-                    ret = temp;
-                    break;
-                }
-            }
-        }
-        return ret;
+        return findLastMatchInLists(teamOther, commonList);
     }
     
-    public T findPreItem(T target, List<T> teamLeft, List<T> otherTeam, boolean isEqual)
+    /**
+     * the target must in teamSelf
+     * */
+    public T findPreItem(T target, List<T> teamSelf, List<T> teamOther, boolean isEqual)
     {
-        T ret = null;
-        List<T> commonList = new ArrayList<T>();
-        Iterator<T> iterator = teamLeft.iterator();
-        Iterator<T> iterator1 = lagestCommonList.iterator();
-        T preItem = iterator1.next();
-        ret = preItem;
-        commonList.add(preItem);
-        while (iterator.hasNext())
-        {
-            T temp = iterator.next();
-            if (temp.equals(target))
-            {
-                break;
-            }
-            if (preItem.equals(temp))
-            {
-                if (iterator1.hasNext())
-                {
-                    ret = preItem;//TODO it is not necessary
-                    preItem = iterator1.next();
-                    commonList.add(preItem);
-                }
-            }
-        }
+        List<T> commonList = findSubCommonList(target, teamSelf, lagestCommonList, -1);
         
-        iterator = otherTeam.iterator();
-        iterator1 = commonList.iterator();
-        preItem = iterator1.next();
-        while (iterator.hasNext())
-        {
-            T temp = iterator.next();
-            if (temp.valueEquals(preItem))
-            {
-                if (iterator1.hasNext())
-                {
-                    ret = temp;
-                    preItem = iterator1.next();
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-        return ret;
+        return findLastMatchInLists(teamOther, commonList);
     }
+    
+    /**
+     * the target must in teamSelf
+     * */
+    public T findNextItem(T target, List<T> teamSelf, List<T> teamOther, boolean isEqual)
+    {
+        List<T> commonList = findSubCommonList(target, teamSelf, lagestCommonList, 1);
+        return findLastMatchInLists(teamOther, commonList);
+    }
+    
 }

@@ -396,11 +396,18 @@ public class XmlInsertor
             BlockComparator<XmlWrap> comparator = new BlockComparator<XmlWrap>(list1, list2);
             comparator.compare();
             XmlWrap preNode = comparator.findEqualItem(theNode, list1, list2, true);
-            return preNode.innerData;
+            if (preNode != null)
+            {
+                return preNode.innerData;
+            }
+            else
+            {
+                return null;
+            }
         }
         else
         {
-            return targetRoot.getFirstChild();
+            return null;
         }
         
     }
